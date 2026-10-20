@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Header } from './components/Header';
 import { IpoSelector } from './components/IpoSelector';
 import { ProfileManager } from './components/ProfileManager';
@@ -30,6 +30,10 @@ export function App() {
   const [progress, setProgress] = useState<{ completed: number; total: number } | null>(null);
   const [results, setResults] = useState<ProfileAllotmentResult[]>([]);
   const [retryingId, setRetryingId] = useState<string | null>(null);
+
+  // Mobile scroll tracking ref
+  const resultsRef = useRef<HTMLElement>(null);
+  const hasScrolledToResults = useRef(false);
 
   // Load IPOs
   const loadIpos = useCallback(async (force = false) => {
@@ -109,6 +113,7 @@ export function App() {
     setIsChecking(true);
     setProgress({ completed: 0, total: profiles.length });
     setResults([]);
+    hasScrolledToResults.current = false;
 
     try {
       await AllotmentService.checkAllProfiles(
@@ -123,6 +128,14 @@ export function App() {
             }
             return [...prev, latestResult];
           });
+
+          // Smoothly scroll to results as soon as first result arrives on mobile
+          if (!hasScrolledToResults.current) {
+            hasScrolledToResults.current = true;
+            setTimeout(() => {
+              resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+          }
         }
       );
     } catch (e) {
@@ -153,7 +166,7 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 pb-16">
+    <div className="min-h-screen bg-slate-50 text-slate-900 pb-36 sm:pb-24">
       {/* Top Header */}
       <Header />
 
@@ -204,7 +217,7 @@ export function App() {
 
         {/* Step 4: Results Display and Summary */}
         {results.length > 0 && (
-          <section aria-labelledby="results-heading">
+          <section ref={resultsRef} aria-labelledby="results-heading" className="scroll-mt-6">
             <ResultsSection
               results={results}
               onRetry={handleRetryProfile}

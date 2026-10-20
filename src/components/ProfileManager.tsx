@@ -23,15 +23,18 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 sm:p-5">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <Users className="w-4 h-4 text-slate-500" />
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700">
-            Saved PAN Profiles ({profiles.length})
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center space-x-1.5 min-w-0">
+          <Users className="w-4 h-4 text-slate-500 flex-shrink-0" />
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700 whitespace-nowrap">
+            Saved PAN Profiles
           </h2>
+          <span className="px-1.5 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-600 rounded-full flex-shrink-0">
+            {profiles.length}
+          </span>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
           {profiles.length > 0 && (
             <button
               type="button"
@@ -47,7 +50,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
             type="button"
             disabled={disabled}
             onClick={onAddClick}
-            className="inline-flex items-center space-x-1 text-xs font-semibold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100/70 border border-brand-200 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+            className="inline-flex items-center space-x-1 text-xs font-semibold text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100/70 border border-brand-200 px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 flex-shrink-0"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add PAN</span>

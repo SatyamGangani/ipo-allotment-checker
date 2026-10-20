@@ -69,19 +69,19 @@ export const IpoSelector: React.FC<IpoSelectorProps> = ({
           }`}
         >
           {selectedIpo ? (
-            <div className="flex items-center justify-between w-full min-w-0 pr-2">
-              <div className="truncate mr-3">
-                <div className="flex items-center space-x-2">
-                  <span className="font-semibold text-slate-900 text-sm truncate">
+            <div className="flex items-center justify-between w-full min-w-0 pr-1 sm:pr-2">
+              <div className="min-w-0 flex-1 mr-2">
+                <div className="flex items-center space-x-1.5 min-w-0">
+                  <span className="font-semibold text-slate-900 text-xs sm:text-sm truncate">
                     {selectedIpo.name}
                   </span>
                   {selectedIpo.issueType && (
-                    <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                    <span className="text-[9px] sm:text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 flex-shrink-0">
                       {selectedIpo.issueType}
                     </span>
                   )}
                 </div>
-                <div className="flex items-center space-x-2 mt-0.5 text-xs text-slate-500">
+                <div className="flex items-center flex-wrap gap-x-1.5 gap-y-0.5 mt-0.5 text-[11px] sm:text-xs text-slate-500">
                   <span>Registrar: <strong className="text-slate-700">{selectedIpo.registrarName}</strong></span>
                   <span>•</span>
                   {selectedIpo.supportType === 'automated' ? (
@@ -96,7 +96,7 @@ export const IpoSelector: React.FC<IpoSelectorProps> = ({
                 </div>
               </div>
               <span
-                className={`text-[11px] font-semibold px-2 py-0.5 rounded-md border flex-shrink-0 ${
+                className={`hidden sm:inline-flex text-[11px] font-semibold px-2 py-0.5 rounded-md border flex-shrink-0 ${
                   REGISTRAR_META[selectedIpo.registrar]?.badgeColor || 'bg-slate-100 text-slate-700'
                 }`}
               >
