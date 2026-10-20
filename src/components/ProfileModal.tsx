@@ -103,7 +103,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 }}
                 placeholder="e.g. Me, Father, Brother, Spouse"
                 maxLength={50}
-                className={`w-full px-3.5 py-2.5 text-sm bg-white border rounded-xl placeholder-slate-400 focus:outline-none transition-all ${
+                className={`w-full px-3.5 py-2.5 text-base sm:text-sm bg-white border rounded-xl placeholder-slate-400 focus:outline-none transition-all ${
                   errors.nameError
                     ? 'border-rose-300 focus:ring-1 focus:ring-rose-500'
                     : 'border-slate-200 focus:border-brand-500 focus:ring-1 focus:ring-brand-500'
@@ -133,7 +133,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 onChange={(e) => handlePanChange(e.target.value)}
                 placeholder="ABCDE1234F"
                 maxLength={10}
-                className={`w-full pl-10 pr-10 py-2.5 text-sm font-mono tracking-wider uppercase bg-white border rounded-xl placeholder-slate-400 focus:outline-none transition-all ${
+                className={`w-full pl-10 pr-10 py-2.5 text-base sm:text-sm font-mono tracking-wider uppercase bg-white border rounded-xl placeholder-slate-400 focus:outline-none transition-all ${
                   errors.panError
                     ? 'border-rose-300 focus:ring-1 focus:ring-rose-500'
                     : isPanFormatValid
