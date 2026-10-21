@@ -39,7 +39,7 @@ export const ResultsSummary: React.FC<ResultsSummaryProps> = ({ summary }) => {
       iconClass: 'text-blue-500',
     },
     {
-      label: 'Check Manually',
+      label: 'Manual Check',
       count: summary.manualCheck,
       icon: ExternalLink,
       cardClass: 'bg-amber-50/70 border-amber-200 text-amber-800',

@@ -11,6 +11,8 @@ export type RegistrarCode =
 
 export type IpoSupportType = 'automated' | 'manual';
 
+export type IpoTimePeriod = 'latest' | 'past';
+
 export interface IpoItem {
   id: string;
   symbol: string;
@@ -24,6 +26,8 @@ export interface IpoItem {
   officialUrl: string;
   issueType?: 'MAINBOARD' | 'SME' | 'DEBT';
   statusAvailable?: boolean;
+  timePeriod?: IpoTimePeriod;
+  closingDate?: string;
 }
 
 export const REGISTRAR_META: Record<
@@ -52,24 +56,24 @@ export const REGISTRAR_META: Record<
   },
   KFINTECH: {
     name: 'KFin Technologies',
-    supportType: 'manual',
-    reason: 'Requires image CAPTCHA verification',
+    supportType: 'automated',
+    reason: 'Direct API supported without CAPTCHA',
     officialUrl: 'https://ipostatus.kfintech.com/',
-    badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+    badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   },
   BIGSHARE: {
     name: 'Bigshare Services',
-    supportType: 'manual',
-    reason: 'Enforces session CAPTCHA verification',
+    supportType: 'automated',
+    reason: 'Direct API supported without CAPTCHA',
     officialUrl: 'https://ipo.bigshareonline.com/IPO_Status.html',
-    badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+    badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   },
   SKYLINE: {
     name: 'Skyline Financial',
-    supportType: 'manual',
-    reason: 'Interactive CSRF session form required',
+    supportType: 'automated',
+    reason: 'Direct API supported without CAPTCHA',
     officialUrl: 'https://www.skylinerta.com/ipo.php',
-    badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+    badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   },
   PURVA: {
     name: 'Purva Sharegistry',

@@ -4,21 +4,6 @@ import { computeSummary, ProfileAllotmentResult } from '../src/types/allotment';
 
 describe('Normalized Status & Adapter Integrity', () => {
   it('correctly returns manual_check for CAPTCHA/WAF-blocked registrars without pretending lookup succeeded', async () => {
-    // KFintech
-    const kfinAdapter = getRegistrarAdapter('KFINTECH');
-    const kfinResult = await kfinAdapter.checkAllotment({ pan: 'ABCDE1234F' });
-    expect(kfinResult.status).toBe('manual_check');
-    expect(kfinResult.canRetry).toBe(false);
-    expect(kfinResult.manualUrl).toBe('https://ipostatus.kfintech.com/');
-    expect(kfinResult.message).toContain('CAPTCHA');
-
-    // Bigshare
-    const bigshareAdapter = getRegistrarAdapter('BIGSHARE');
-    const bigshareResult = await bigshareAdapter.checkAllotment({ pan: 'ABCDE1234F' });
-    expect(bigshareResult.status).toBe('manual_check');
-    expect(bigshareResult.manualUrl).toBe('https://ipo.bigshareonline.com/IPO_Status.html');
-    expect(bigshareResult.message).toContain('CAPTCHA');
-
     // BSE
     const bseAdapter = getRegistrarAdapter('BSE');
     const bseResult = await bseAdapter.checkAllotment({ pan: 'ABCDE1234F' });
@@ -31,6 +16,12 @@ describe('Normalized Status & Adapter Integrity', () => {
     const nseResult = await nseAdapter.checkAllotment({ pan: 'ABCDE1234F' });
     expect(nseResult.status).toBe('manual_check');
     expect(nseResult.manualUrl).toBe('https://www.nseindia.com/invest/check-trades-bids-verify-ipo-bids');
+
+    // Purva
+    const purvaAdapter = getRegistrarAdapter('PURVA');
+    const purvaResult = await purvaAdapter.checkAllotment({ pan: 'ABCDE1234F' });
+    expect(purvaResult.status).toBe('manual_check');
+    expect(purvaResult.manualUrl).toBe('https://www.purvashare.com/investor-service/ipo-query');
   });
 
   it('correctly maps proxy API responses for automated registrars', async () => {
