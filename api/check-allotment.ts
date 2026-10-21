@@ -5,6 +5,7 @@ interface CheckRequestBody {
   companyId?: string;
   pan: string;
   symbol?: string;
+  companyName?: string;
   bseId?: string;
 }
 
@@ -13,6 +14,44 @@ interface CheckRequestBody {
  * Handles PAN allotment check for a specific registrar.
  * Strictly zero persistence or logging of PAN.
  */
+
+// In-memory cache for live KFintech company lookup
+let cachedKfinLiveList: Array<{ clientId: string; name: string }> | null = null;
+let cachedKfinLiveExpiry = 0;
+
+async function getLiveKfintechCompanies(): Promise<Array<{ clientId: string; name: string }>> {
+  const now = Date.now();
+  if (cachedKfinLiveList && now < cachedKfinLiveExpiry) return cachedKfinLiveList;
+  try {
+    const htmlResp = await fetch("https://ipostatus.kfintech.com/", {
+      headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!htmlResp.ok) return cachedKfinLiveList || [];
+    const html = await htmlResp.text();
+    const scriptMatch = html.match(/src=["']((?:\.\/)?static\/js\/main\.[a-z0-9]+\.js)["']/i);
+    if (!scriptMatch) return cachedKfinLiveList || [];
+    const scriptPath = scriptMatch[1].replace(/^\.\//, "");
+    const jsResp = await fetch(`https://ipostatus.kfintech.com/${scriptPath}`, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Referer: "https://ipostatus.kfintech.com/",
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!jsResp.ok) return cachedKfinLiveList || [];
+    const jsText = await jsResp.text();
+    const match = jsText.match(/rf=JSON\.parse\(\x27(\[\{.*?\}\])\x27\)/) ||
+                  jsText.match(/JSON\.parse\(\x27(\[\{"clientId".*?\}\])\x27\)/);
+    if (match) {
+      cachedKfinLiveList = JSON.parse(match[1]);
+      cachedKfinLiveExpiry = now + 5 * 60 * 1000;
+      return cachedKfinLiveList || [];
+    }
+  } catch {}
+  return cachedKfinLiveList || [];
+}
+
 export async function handleCheckAllotment(body: CheckRequestBody, res: ServerResponse) {
   const { registrar, companyId, pan } = body;
 
@@ -244,89 +283,16 @@ export async function handleCheckAllotment(body: CheckRequestBody, res: ServerRe
   // 3. KFintech Adapter (Direct AWS REST API - No CAPTCHA required)
   if (registrar === 'KFINTECH') {
     let resolvedClientId = companyId?.trim();
-    if (!resolvedClientId && body.symbol) {
-      const sym = body.symbol.toUpperCase().replace(/[^A-Z0-9]/g, '');
-      const KFIN_MAP: Record<string, string> = {
-        ZETWERK: '29931891190',
-        ZETWERKMANUFACTURING: '29931891190',
-        SSRETAIL: '50005836440',
-        FUSIONCX: '32261845640',
-        VAIBHAV: '75524247020',
-        SOLLFEGE: '47651989560',
-        SRIT: '37168935020',
-        ORIENTCBL: '93220762680',
-        BENCHMARK: '27219762590',
-        ELEVATE: '30273060190',
-        VARMORA: '79990817560',
-        HIMALAYA: '15174680810',
-        AXIOM: '93157481460',
-        SONASELECTION: '82437854510',
-        KHERIA: '46596758590',
-        HEROMOTORS: '49590168400',
-        CENTURY: '18432822190',
-        RENTOMOJO: '66907812020',
-        LCC: '58236771090',
-        STEAMHOUSE: '76081590190',
-        VINOD: '57236082750',
-        PRASOL: '75003530500',
-        PRANAV: '58129803280',
-        APANA: '33631182620',
-        FLYHI: '40580036070',
-        RAYSOFBELIEF: '60121009540',
-        ASHUTOSH: '64793825640',
-        SHANTI: '85357713080',
-        PURPLESTYLE: '95989183810',
-        ANNU: '63488567220',
-        SUMAX: '29984512460',
-        TEMPSENS: '61328680581',
-        SHANKESH: '54923077460',
-        HORIZON: '52457887480',
-        CREDENT: '12562536840',
-        SHIPROCKET: '86153103110',
-        MILKYMIST: '29849673370',
-        MOLBIO: '81387868980',
-        DHOOT: '94818267561',
-        ARDEE: '62198153830',
-        MVELECTRO: '44065980180',
-        JUNIPER: '53707331280',
-        DHAVAL: '67709372110',
-        MANIPAL: '43836057990',
-        ADVANCE: '42817695520',
-        XTRANET: '94419360500',
-        SHREEBALAJI: '63734978420',
-        GULFLOYDS: '19193086920',
-        CALIBER: '89605487720',
-        SBIFUNDS: '89468061991',
-        ALPINETEX: '41422222050',
-        KRATIKAL: '73206134640',
-        TEJAENG: '17643901490',
-        ADONAGRO: '65065971040',
-        CRAZYSNACKS: '39751101520',
-        CSMTECH: '89075375160',
-        TURTLEMINT: '10609640970',
-        CLAYCRAFT: '82984397570',
-        LIOTECH: '41208427340',
-        HEXAGON: '70806992450',
-        VAHH: '28962929970',
-        CMRGREEN: '65310715440',
-        TEAMTECH: '53483362510',
-        RFBL: '26859517830',
-        VALUE360: '34561715130',
-        ONEMI: '54450217260',
-        ADISOFT: '92634312570',
-        MEHUL: '80184898770',
-        AMIRCHAND: '77980267280',
-        CENTRALMINE: '67638044790',
-        NOVUS: '26440316230',
-        INNOVISION: '35015605280',
-        RAJPUTANA: '43990634450',
-        ACCORD: '51058840660',
-        FRACTAL: '85658340220',
-        AYEFINANCE: '62430336220',
-        ACCRETION: '18899853180',
-        KANISHK: '41087928370',
-      };
-      resolvedClientId = KFIN_MAP[sym];
+    if (!resolvedClientId && (body.symbol || body.companyName)) {
+      const query = (body.symbol || body.companyName || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      const liveList = await getLiveKfintechCompanies();
+      const match = liveList.find(c => {
+        const cleanName = c.name.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        return cleanName.includes(query) || query.includes(cleanName) || cleanName.startsWith(query);
+      });
+      if (match) {
+        resolvedClientId = match.clientId;
+      }
     }
 
     if (!resolvedClientId) {
