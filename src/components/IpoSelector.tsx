@@ -77,11 +77,12 @@ export const IpoSelector: React.FC<IpoSelectorProps> = ({
       </div>
 
       {/* Main Trigger Button */}
-      <div className="flex items-center space-x-2">
+      {/* Main Trigger Button & Refresher */}
+      <div className="flex items-center gap-2 w-full">
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`flex-1 flex items-center justify-between px-4 py-3 bg-white rounded-xl border text-left transition-all shadow-sm ${
+          className={`flex-1 min-w-0 flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-white rounded-xl border text-left transition-all shadow-sm ${
             isOpen
               ? 'border-brand-500 ring-2 ring-brand-500/10'
               : 'border-slate-200 hover:border-slate-300'
@@ -104,7 +105,7 @@ export const IpoSelector: React.FC<IpoSelectorProps> = ({
                     </span>
                   )}
                   {selectedIpo.issueType && (
-                    <span className="text-[9px] sm:text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 flex-shrink-0">
+                    <span className="hidden xs:inline-flex text-[9px] sm:text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 flex-shrink-0">
                       {selectedIpo.issueType}
                     </span>
                   )}
@@ -145,7 +146,8 @@ export const IpoSelector: React.FC<IpoSelectorProps> = ({
           type="button"
           onClick={onRefresh}
           disabled={isLoading}
-          className="p-3 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl text-slate-600 transition-colors shadow-sm disabled:opacity-50"
+          aria-label="Refresh live IPO list"
+          className="self-stretch flex-shrink-0 w-11 sm:w-12 flex items-center justify-center bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-xl text-slate-600 transition-colors shadow-sm disabled:opacity-50"
           title="Refresh live IPO list"
         >
           <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-brand-600' : ''}`} />
