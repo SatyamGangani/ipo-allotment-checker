@@ -28,6 +28,19 @@ export interface RawIpoItem {
 const HISTORICAL_IPOS: RawIpoItem[] = [
   // --- KFintech Active & Recent Issues (Automated Lookup Supported) ---
   {
+    id: 'kfin_zetwerk',
+    symbol: 'ZETWERK',
+    name: 'ZETWERK MANUFACTURING BUSINESSES LIMITED',
+    registrar: 'KFINTECH',
+    registrarName: 'KFin Technologies',
+    registrarCompanyId: '29931891190',
+    supportType: 'automated',
+    supportReason: 'Direct automated PAN lookup supported',
+    officialUrl: 'https://ipostatus.kfintech.com/',
+    issueType: 'MAINBOARD',
+    timePeriod: 'latest',
+  },
+  {
     id: 'kfin_ssretail',
     symbol: 'SSRETAIL',
     name: 'SS RETAIL LIMITED',
@@ -563,6 +576,108 @@ function normalizeName(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]/g, '');
 }
 
+// In-memory cache for live KFintech company catalog to maintain sub-second response times
+let cachedKfintechItems: RawIpoItem[] | null = null;
+let cachedKfintechExpiry = 0;
+const KFINTECH_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
+
+async function fetchKfintechLiveIpos(): Promise<RawIpoItem[]> {
+  const now = Date.now();
+  if (cachedKfintechItems && now < cachedKfintechExpiry) {
+    return cachedKfintechItems;
+  }
+
+  try {
+    const htmlResp = await fetch('https://ipostatus.kfintech.com/', {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!htmlResp.ok) {
+      logSafe('Failed to fetch KFintech home page:', { status: htmlResp.status });
+      return cachedKfintechItems || [];
+    }
+
+    const html = await htmlResp.text();
+    const scriptMatch = html.match(/src=["']((?:\.\/)?static\/js\/main\.[a-z0-9]+\.js)["']/i);
+    if (!scriptMatch) {
+      logSafe('Could not locate KFintech main JS bundle script in HTML');
+      return cachedKfintechItems || [];
+    }
+
+    const scriptPath = scriptMatch[1].replace(/^\.\//, '');
+    const scriptUrl = `https://ipostatus.kfintech.com/${scriptPath}`;
+
+    const jsResp = await fetch(scriptUrl, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Referer: 'https://ipostatus.kfintech.com/',
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!jsResp.ok) {
+      logSafe('Failed to fetch KFintech JS bundle:', { status: jsResp.status });
+      return cachedKfintechItems || [];
+    }
+
+    const jsText = await jsResp.text();
+    const match =
+      jsText.match(/rf=JSON\.parse\(\x27(\[\{.*?\}\])\x27\)/) ||
+      jsText.match(/JSON\.parse\(\x27(\[\{"clientId".*?\}\])\x27\)/);
+
+    if (!match) {
+      logSafe('Could not extract JSON company list from KFintech bundle');
+      return cachedKfintechItems || [];
+    }
+
+    const list = JSON.parse(match[1]) as Array<{ clientId: string; name: string }>;
+    if (!Array.isArray(list)) {
+      return cachedKfintechItems || [];
+    }
+
+    const items: RawIpoItem[] = [];
+    for (let i = 0; i < list.length; i++) {
+      const entry = list[i];
+      const compId = entry.clientId?.trim();
+      const compName = entry.name?.trim();
+      if (!compId || !compName) continue;
+
+      const isSme = compName.toUpperCase().includes('SME');
+      const isDebt = compName.toUpperCase().includes('NCD') || compName.toUpperCase().includes('BONDS');
+      const symbolGuess = compName.split(/\s+/)[0].toUpperCase().replace(/[^A-Z0-9]/g, '');
+      // Top 8-10 issues on KFintech portal are active/recent issues, the rest are past
+      const isRecent = i <= 8;
+
+      items.push({
+        id: `kfin_${compId}`,
+        symbol: symbolGuess || compName.slice(0, 8).toUpperCase(),
+        name: compName,
+        registrar: 'KFINTECH',
+        registrarName: 'KFin Technologies',
+        registrarCompanyId: compId,
+        supportType: 'automated',
+        supportReason: 'Direct automated PAN lookup supported',
+        officialUrl: 'https://ipostatus.kfintech.com/',
+        issueType: isDebt ? 'DEBT' : isSme ? 'SME' : 'MAINBOARD',
+        timePeriod: isRecent ? 'latest' : 'past',
+      });
+    }
+
+    cachedKfintechItems = items;
+    cachedKfintechExpiry = now + KFINTECH_CACHE_TTL_MS;
+    logSafe(`Successfully scraped and cached ${items.length} live KFintech IPOs`);
+    return items;
+  } catch (err) {
+    logSafe('Failed to fetch dynamic KFintech IPO catalog:', { error: (err as Error).message });
+    return cachedKfintechItems || [];
+  }
+}
+
 /**
  * Fetches the active IPO list from supported registrars and BSE/NSE.
  * Puts latest/active IPOs on top, followed by past IPOs.
@@ -771,7 +886,21 @@ export async function handleGetIpos(res: ServerResponse) {
       logSafe('Failed to fetch NSE IPO list:', { error: (e as Error).message });
     }
 
-    // 5. Add Historical & Curated IPO catalog (routed by timePeriod)
+    // 5. Fetch KFintech live dynamic issues (Automated lookup supported)
+    try {
+      const kfinItems = await fetchKfintechLiveIpos();
+      for (const item of kfinItems) {
+        if (item.timePeriod === 'latest') {
+          latestIpos.push(item);
+        } else {
+          pastIpos.push(item);
+        }
+      }
+    } catch (e) {
+      logSafe('Failed to process KFintech live IPOs:', { error: (e as Error).message });
+    }
+
+    // 6. Add Historical & Curated IPO catalog (routed by timePeriod)
     for (const hist of HISTORICAL_IPOS) {
       if (hist.timePeriod === 'latest') {
         latestIpos.push(hist);

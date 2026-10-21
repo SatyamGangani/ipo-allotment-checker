@@ -247,6 +247,8 @@ export async function handleCheckAllotment(body: CheckRequestBody, res: ServerRe
     if (!resolvedClientId && body.symbol) {
       const sym = body.symbol.toUpperCase().replace(/[^A-Z0-9]/g, '');
       const KFIN_MAP: Record<string, string> = {
+        ZETWERK: '29931891190',
+        ZETWERKMANUFACTURING: '29931891190',
         SSRETAIL: '50005836440',
         FUSIONCX: '32261845640',
         VAIBHAV: '75524247020',
