@@ -7,6 +7,11 @@ export interface GmpEntry {
   indicativePrice?: number;
   lotSize?: number;
   source: string;
+  isListed?: boolean;
+  listingPrice?: number;
+  listingGainPct?: number;
+  listingGainPerShare?: number;
+  listingDate?: string;
 }
 
 export interface GmpApiResponse {

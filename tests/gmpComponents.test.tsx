@@ -95,6 +95,62 @@ describe('GmpMarketCard Component', () => {
     expect(screen.getByText('+₹1,650')).toBeDefined();
   });
 
+  it('renders official listing performance when share is listed on BSE/NSE', () => {
+    const listedGmp: GmpEntry = {
+      name: 'Bonfiglioli Transmissions',
+      cleanName: 'bonfigliolitransmissions',
+      gmp: 66,
+      pct: 11.26,
+      price: 586,
+      lotSize: 25,
+      source: 'InvestorGain',
+      isListed: true,
+      listingPrice: 586,
+      listingGainPct: 0.0,
+      listingGainPerShare: 0,
+      listingDate: '23-Oct',
+    };
+
+    render(<GmpMarketCard selectedIpo={sampleIpo} gmpEntry={listedGmp} />);
+
+    // Header & badge
+    expect(screen.getByText('Official Listing Performance')).toBeDefined();
+    expect(screen.getByText(/LISTED • 23-OCT/i)).toBeDefined();
+    expect(screen.getByText(/Official Debut via InvestorGain/i)).toBeDefined();
+
+    // Listing metrics
+    expect(screen.getByText('0.0%')).toBeDefined();
+    expect(screen.getAllByText(/₹586/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/₹0/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Flat market debut/i)).toBeDefined();
+    expect(screen.getByText(/This share is officially listed and trading/i)).toBeDefined();
+  });
+
+  it('renders official listing performance for listed IPO with positive listing gain', () => {
+    const tonboGmp: GmpEntry = {
+      name: 'Tonbo Imaging India',
+      cleanName: 'tonboimaging',
+      gmp: 452,
+      pct: 64.57,
+      price: 700,
+      lotSize: 21,
+      source: 'InvestorGain',
+      isListed: true,
+      listingPrice: 1160,
+      listingGainPct: 65.7,
+      listingGainPerShare: 460,
+      listingDate: '23-Oct',
+    };
+
+    render(<GmpMarketCard selectedIpo={sampleIpo} gmpEntry={tonboGmp} />);
+
+    expect(screen.getByText('+65.7%')).toBeDefined();
+    expect(screen.getByText('₹1160')).toBeDefined();
+    expect(screen.getByText('₹700')).toBeDefined();
+    expect(screen.getByText('+₹460')).toBeDefined();
+    expect(screen.getByText('+₹9,660')).toBeDefined(); // 21 * 460
+  });
+
   it('renders neutral message when GMP is not quoted yet', () => {
     render(<GmpMarketCard selectedIpo={sampleIpo} gmpEntry={null} />);
 

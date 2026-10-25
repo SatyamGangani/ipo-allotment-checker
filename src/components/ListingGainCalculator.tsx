@@ -51,6 +51,10 @@ export const ListingGainCalculator: React.FC<ListingGainCalculatorProps> = ({
     gmp: number;
     pct: number;
     source: string;
+    isListed?: boolean;
+    listingPrice?: number;
+    listingGainPct?: number;
+    listingGainPerShare?: number;
   } | null>(null);
 
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
@@ -70,12 +74,25 @@ export const ListingGainCalculator: React.FC<ListingGainCalculatorProps> = ({
             gmp: match.gmp,
             pct: match.pct,
             source: match.source,
+            isListed: match.isListed,
+            listingPrice: match.listingPrice,
+            listingGainPct: match.listingGainPct,
+            listingGainPerShare: match.listingGainPerShare,
           });
-          if (match.pct > 0) {
-            setPercentGain(match.pct);
-          }
-          if (match.gmp > 0) {
-            setGainPerShare(match.gmp);
+          if (match.isListed) {
+            if (match.listingGainPct !== undefined) {
+              setPercentGain(match.listingGainPct);
+            }
+            if (match.listingGainPerShare !== undefined) {
+              setGainPerShare(match.listingGainPerShare);
+            }
+          } else {
+            if (match.pct > 0) {
+              setPercentGain(match.pct);
+            }
+            if (match.gmp > 0) {
+              setGainPerShare(match.gmp);
+            }
           }
         }
       })
@@ -179,14 +196,22 @@ export const ListingGainCalculator: React.FC<ListingGainCalculatorProps> = ({
             </div>
 
             <div className="flex items-center space-x-2 flex-wrap gap-1">
-              {liveGmpInfo && (
+              {liveGmpInfo?.isListed ? (
+                <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800 border border-blue-300 shadow-2xs">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                  <span>
+                    Listed at ₹{liveGmpInfo.listingPrice} ({liveGmpInfo.listingGainPct !== undefined && liveGmpInfo.listingGainPct > 0 ? '+' : ''}
+                    {liveGmpInfo.listingGainPct?.toFixed(1) ?? '0.0'}%) via {liveGmpInfo.source}
+                  </span>
+                </span>
+              ) : liveGmpInfo ? (
                 <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-2xs">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
                   <span>
                     Live GMP: +{liveGmpInfo.pct}% (+₹{liveGmpInfo.gmp}/sh) via {liveGmpInfo.source}
                   </span>
                 </span>
-              )}
+              ) : null}
               {mode === 'percent' && (
                 <span className="text-[11px] text-emerald-800 font-medium bg-emerald-100/60 px-2 py-0.5 rounded-md">
                   Standard Retail Lot ~{formatRupee(safeLotInvestment)}
@@ -205,7 +230,9 @@ export const ListingGainCalculator: React.FC<ListingGainCalculatorProps> = ({
                     htmlFor="expected-percent-input"
                     className="block text-xs font-semibold text-slate-700"
                   >
-                    Expected Listing Gain / Target GMP (%):
+                    {liveGmpInfo?.isListed
+                      ? 'Official Listing Gain (%):'
+                      : 'Expected Listing Gain / Target GMP (%):'}
                   </label>
                   {liveGmpInfo && (
                     <span className="text-[10px] text-emerald-700 font-medium">
@@ -267,7 +294,9 @@ export const ListingGainCalculator: React.FC<ListingGainCalculatorProps> = ({
                   htmlFor="expected-gain-input"
                   className="block text-xs font-semibold text-slate-700"
                 >
-                  Expected Listing Gain / Target GMP (₹ per share):
+                  {liveGmpInfo?.isListed
+                    ? 'Official Listing Gain (₹ per share):'
+                    : 'Expected Listing Gain / Target GMP (₹ per share):'}
                 </label>
 
                 <div className="relative rounded-xl shadow-2xs">

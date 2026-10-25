@@ -9,6 +9,11 @@ export interface GmpEntry {
   indicativePrice?: number;
   lotSize?: number;
   source: string;
+  isListed?: boolean;
+  listingPrice?: number;
+  listingGainPct?: number;
+  listingGainPerShare?: number;
+  listingDate?: string;
 }
 
 // In-memory cache for live GMP data (10 minutes TTL)
@@ -24,8 +29,21 @@ export function cleanString(str: string): string {
 }
 
 /**
- * Scrapes live GMP from InvestorGain (https://www.investorgain.com/report/ipo-gmp-live/331/).
- * Captures name, GMP (₹), GMP (%), Issue Price, and Lot Size.
+ * Decodes Cloudflare email obfuscation used by InvestorGain for "L@price" strings.
+ */
+function decodeCloudflareEmail(encoded: string): string {
+  if (!encoded || encoded.length < 2) return '';
+  const k = parseInt(encoded.substring(0, 2), 16);
+  let decoded = '';
+  for (let i = 2; i < encoded.length; i += 2) {
+    decoded += String.fromCharCode(parseInt(encoded.substring(i, i + 2), 16) ^ k);
+  }
+  return decoded;
+}
+
+/**
+ * Scrapes live GMP and listing status from InvestorGain (https://www.investorgain.com/report/ipo-gmp-live/331/).
+ * Captures name, GMP (₹), GMP (%), Issue Price, Lot Size, and official Listing Price/Gain.
  */
 async function fetchInvestorGainGmp(): Promise<GmpEntry[]> {
   const resp = await fetch('https://www.investorgain.com/report/ipo-gmp-live/331/', {
@@ -59,13 +77,44 @@ async function fetchInvestorGainGmp(): Promise<GmpEntry[]> {
     const lotMatch = rowContent.match(
       /data-label=["']Lot["'][^>]*>[\s\S]*?<div[^>]*>([0-9]+)<\/div>/i
     );
+    const cfMatch = rowContent.match(/data-cfemail=["']([0-9a-fA-F]+)["']/);
+    const plainLMatch = rowContent.match(/L@([0-9.]+)/i);
+    const listingDateMatch = rowContent.match(
+      /data-label=["']Listing["'][^>]*>[\s\S]*?<div[^>]*>([^<]+)/i
+    );
 
-    if (nameMatch && gmpMatch) {
+    if (nameMatch) {
       const name = nameMatch[1].trim();
-      const gmp = parseFloat(gmpMatch[1]) || 0;
-      const pct = parseFloat(gmpMatch[2]) || 0;
+      const gmp = gmpMatch ? parseFloat(gmpMatch[1]) || 0 : 0;
+      const pct = gmpMatch ? parseFloat(gmpMatch[2]) || 0 : 0;
       const price = priceMatch ? parseFloat(priceMatch[1]) : undefined;
       const lotSize = lotMatch ? parseInt(lotMatch[1], 10) : undefined;
+      const listingDateRaw = listingDateMatch ? listingDateMatch[1].trim() : undefined;
+      const listingDate = listingDateRaw ? listingDateRaw.split(/\s+/)[0] : undefined;
+
+      // Decode official listing price (e.g. "L@586.00")
+      let decodedL = '';
+      if (cfMatch) {
+        decodedL = decodeCloudflareEmail(cfMatch[1]);
+      } else if (plainLMatch) {
+        decodedL = `L@${plainLMatch[1]}`;
+      }
+
+      const lPriceMatch = decodedL.match(/L@([0-9.]+)/i);
+      const isListed = !!lPriceMatch;
+      const listingPrice = lPriceMatch ? parseFloat(lPriceMatch[1]) : undefined;
+
+      // Extract listing day gain %
+      let listingGainPct: number | undefined;
+      const pctTagMatch = rowContent.match(/\(([+-]?[0-9.]+)%\)/);
+      if (pctTagMatch) {
+        listingGainPct = parseFloat(pctTagMatch[1]);
+      } else if (isListed && listingPrice && price) {
+        listingGainPct = Math.round(((listingPrice - price) / price) * 10000) / 100;
+      }
+
+      const listingGainPerShare =
+        isListed && listingPrice && price ? Math.round((listingPrice - price) * 100) / 100 : 0;
 
       items.push({
         name,
@@ -76,6 +125,11 @@ async function fetchInvestorGainGmp(): Promise<GmpEntry[]> {
         lotSize,
         indicativePrice: price && gmp ? price + gmp : undefined,
         source: 'InvestorGain',
+        isListed,
+        listingPrice,
+        listingGainPct,
+        listingGainPerShare,
+        listingDate,
       });
     }
   }

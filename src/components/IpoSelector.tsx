@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Search, ChevronDown, Check, Zap, ExternalLink, RefreshCw, Flame, History } from 'lucide-react';
+import { Search, ChevronDown, Check, CheckCircle2, Zap, ExternalLink, RefreshCw, Flame, History } from 'lucide-react';
 import { IpoItem, REGISTRAR_META } from '../types/ipo';
 import { GmpEntry, findGmpForIpo } from '../services/gmpService';
 
@@ -117,12 +117,21 @@ export const IpoSelector: React.FC<IpoSelectorProps> = ({
                       {selectedIpo.issueType}
                     </span>
                   )}
-                  {selectedGmp && selectedGmp.gmp > 0 && (
+                  {selectedGmp?.isListed ? (
+                    <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-extrabold bg-blue-50 text-blue-800 border border-blue-300 shadow-xs flex-shrink-0">
+                      <CheckCircle2 className="w-3 h-3 text-blue-600" />
+                      <span>
+                        Listed: ₹{selectedGmp.listingPrice}{' '}
+                        ({selectedGmp.listingGainPct !== undefined && selectedGmp.listingGainPct > 0 ? '+' : ''}
+                        {selectedGmp.listingGainPct?.toFixed(1) ?? '0.0'}%)
+                      </span>
+                    </span>
+                  ) : selectedGmp && selectedGmp.gmp > 0 ? (
                     <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-extrabold bg-amber-50 text-amber-800 border border-amber-300 shadow-xs flex-shrink-0">
                       <Flame className="w-3 h-3 text-amber-600 fill-amber-500" />
                       <span>GMP: +{selectedGmp.pct.toFixed(1)}% (₹{selectedGmp.gmp})</span>
                     </span>
-                  )}
+                  ) : null}
                 </div>
                 <div className="flex items-center flex-wrap gap-x-1.5 gap-y-0.5 mt-0.5 text-[11px] sm:text-xs text-slate-500">
                   <span>Registrar: <strong className="text-slate-700">{selectedIpo.registrarName}</strong></span>
@@ -300,12 +309,19 @@ export const IpoSelector: React.FC<IpoSelectorProps> = ({
                               {ipo.issueType}
                             </span>
                           )}
-                          {itemGmp && itemGmp.gmp > 0 && (
+                          {itemGmp?.isListed ? (
+                            <span className="inline-flex items-center space-x-0.5 text-[9px] sm:text-[10px] font-bold text-blue-800 bg-blue-50 border border-blue-300 px-1.5 py-0.2 rounded flex-shrink-0">
+                              <span>
+                                Listed ₹{itemGmp.listingPrice} ({itemGmp.listingGainPct !== undefined && itemGmp.listingGainPct > 0 ? '+' : ''}
+                                {itemGmp.listingGainPct?.toFixed(1) ?? '0.0'}%)
+                              </span>
+                            </span>
+                          ) : itemGmp && itemGmp.gmp > 0 ? (
                             <span className="inline-flex items-center space-x-0.5 text-[9px] sm:text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-1.5 py-0.2 rounded flex-shrink-0">
                               <Flame className="w-2.5 h-2.5 text-amber-600 fill-amber-500" />
                               <span>+{itemGmp.pct.toFixed(1)}% (₹{itemGmp.gmp})</span>
                             </span>
-                          )}
+                          ) : null}
                         </div>
                         <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 mt-1 text-[11px] text-slate-500">
                           <span>Registrar: <strong>{ipo.registrarName}</strong></span>
