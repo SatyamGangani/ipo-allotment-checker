@@ -10,7 +10,7 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
-import { ProfileAllotmentResult, STATUS_UI_CONFIG, AllotmentStatus } from '../types/allotment';
+import { ProfileAllotmentResult, STATUS_UI_CONFIG, AllotmentStatus, formatLotAndShares } from '../types/allotment';
 import { maskPan } from '../types/profile';
 
 interface ResultCardProps {
@@ -84,7 +84,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({
           <div className="my-2.5 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200/80 flex items-center justify-between text-xs text-emerald-900">
             <span className="font-medium">Allotted Shares:</span>
             <span className="text-base font-extrabold text-emerald-700 font-mono">
-              {result.allottedQuantity} Shares
+              {formatLotAndShares(result.allottedQuantity, result.appliedQuantity)}
             </span>
           </div>
         )}
@@ -92,7 +92,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({
         {/* Applied Quantity Info if available */}
         {result.status === 'not_allotted' && typeof result.appliedQuantity === 'number' && (
           <div className="my-1.5 text-xs text-slate-500">
-            Applied: <strong className="text-slate-700 font-mono">{result.appliedQuantity} shares</strong> • Allotted: <strong className="text-slate-700 font-mono">0</strong>
+            Applied: <strong className="text-slate-700 font-mono">{formatLotAndShares(result.appliedQuantity, result.appliedQuantity)}</strong> • Allotted: <strong className="text-slate-700 font-mono">0</strong>
           </div>
         )}
 

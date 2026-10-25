@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import { handleGetIpos, handleCheckAllotment } from './registrarProxy.ts';
+import { handleGetIpos, handleCheckAllotment, handleGetGmp } from './registrarProxy.ts';
 
 export function apiMiddleware(
   req: IncomingMessage,
@@ -28,6 +28,10 @@ export function apiMiddleware(
 
   if (req.method === 'GET' && (cleanPath === '/api/ipos' || cleanPath === '/api/ipos/')) {
     return handleGetIpos(res);
+  }
+
+  if (req.method === 'GET' && (cleanPath === '/api/gmp' || cleanPath === '/api/gmp/')) {
+    return handleGetGmp(res);
   }
 
   if (req.method === 'POST' && (cleanPath === '/api/check-allotment' || cleanPath === '/api/check-allotment/')) {

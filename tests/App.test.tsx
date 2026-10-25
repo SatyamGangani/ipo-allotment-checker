@@ -43,7 +43,7 @@ describe('App Integration Flow', () => {
 
     // Verify IPO selector renders
     await waitFor(() => {
-      expect(screen.getByText('Test IPO Ltd')).toBeDefined();
+      expect(screen.getAllByText('Test IPO Ltd').length).toBeGreaterThan(0);
     });
 
     // Verify empty profile prompt
@@ -163,7 +163,7 @@ describe('App Integration Flow', () => {
 
     // Verify result card and summary appear
     await waitFor(() => {
-      expect(screen.getByText('25 Shares')).toBeDefined();
+      expect(screen.getByText('1 Lot (25 Shares)')).toBeDefined();
       expect(screen.getByText(/Congratulations! Allotted 25 shares/i)).toBeDefined();
       // Summary card count: Allotted 1
       expect(screen.getByText('Allotment Results (1)')).toBeDefined();

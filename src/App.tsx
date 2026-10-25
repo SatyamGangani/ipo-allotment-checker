@@ -1,13 +1,16 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Header } from './components/Header';
 import { IpoSelector } from './components/IpoSelector';
+import { GmpMarketCard } from './components/GmpMarketCard';
 import { ProfileManager } from './components/ProfileManager';
 import { ProfileModal } from './components/ProfileModal';
+import { QrSyncModal } from './components/QrSyncModal';
 import { CheckAction } from './components/CheckAction';
 import { ResultsSection } from './components/ResultsSection';
 
 import { StorageService } from './services/storage';
 import { fetchIpos } from './services/ipoDiscovery';
+import { fetchGmpList, findGmpForIpo, GmpEntry } from './services/gmpService';
 import { AllotmentService } from './services/allotmentService';
 
 import { Profile } from './types/profile';
@@ -19,11 +22,16 @@ export function App() {
   const [profiles, setProfiles] = useState<Profile[]>(() => StorageService.getProfiles());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
 
   // IPO state
   const [ipos, setIpos] = useState<IpoItem[]>([]);
   const [selectedIpo, setSelectedIpo] = useState<IpoItem | null>(null);
   const [isLoadingIpos, setIsLoadingIpos] = useState(true);
+
+  // Live GMP state
+  const [gmpList, setGmpList] = useState<GmpEntry[]>([]);
+  const [isLoadingGmp, setIsLoadingGmp] = useState(true);
 
   // Allotment checking state
   const [isChecking, setIsChecking] = useState(false);
@@ -34,6 +42,19 @@ export function App() {
   // Mobile scroll tracking ref
   const resultsRef = useRef<HTMLElement>(null);
   const hasScrolledToResults = useRef(false);
+
+  // Load live GMP
+  const loadGmp = useCallback(async (force = false) => {
+    setIsLoadingGmp(true);
+    try {
+      const list = await fetchGmpList(force);
+      setGmpList(list);
+    } catch (err) {
+      console.error('Failed to load live GMP:', err);
+    } finally {
+      setIsLoadingGmp(false);
+    }
+  }, []);
 
   // Load IPOs
   const loadIpos = useCallback(async (force = false) => {
@@ -68,10 +89,23 @@ export function App() {
         setIsLoadingIpos(false);
       }
     });
+
+    fetchGmpList().then((gmp) => {
+      if (isMounted) {
+        setGmpList(gmp);
+        setIsLoadingGmp(false);
+      }
+    });
+
     return () => {
       isMounted = false;
     };
   }, []);
+
+  // Find GMP for selected IPO
+  const selectedGmp = useMemo(() => {
+    return findGmpForIpo(selectedIpo?.name, gmpList);
+  }, [selectedIpo, gmpList]);
 
   // Profile management handlers
   const handleSaveProfile = (name: string, pan: string, editId?: string) => {
@@ -133,7 +167,9 @@ export function App() {
           if (!hasScrolledToResults.current) {
             hasScrolledToResults.current = true;
             setTimeout(() => {
-              resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              if (typeof resultsRef.current?.scrollIntoView === 'function') {
+                resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
             }, 100);
           }
         }
@@ -182,9 +218,24 @@ export function App() {
               setResults([]); // Reset results when switching IPO
             }}
             isLoading={isLoadingIpos}
-            onRefresh={() => loadIpos(true)}
+            onRefresh={() => {
+              loadIpos(true);
+              loadGmp(true);
+            }}
+            gmpList={gmpList}
           />
         </section>
+
+        {/* Live Market & Grey Market Premium (GMP) Snapshot */}
+        {selectedIpo && (
+          <section aria-label="Live Market GMP Snapshot">
+            <GmpMarketCard
+              selectedIpo={selectedIpo}
+              gmpEntry={selectedGmp}
+              isLoading={isLoadingGmp}
+            />
+          </section>
+        )}
 
         {/* Step 2: Configure Family PAN Profiles */}
         <section aria-labelledby="profiles-heading">
@@ -200,6 +251,7 @@ export function App() {
             }}
             onDeleteClick={handleDeleteProfile}
             onDeleteAllClick={handleDeleteAllProfiles}
+            onSyncClick={() => setIsQrModalOpen(true)}
             disabled={isChecking}
           />
         </section>
@@ -222,6 +274,7 @@ export function App() {
               results={results}
               onRetry={handleRetryProfile}
               retryingId={retryingId}
+              selectedIpo={selectedIpo}
             />
           </section>
         )}
@@ -238,6 +291,17 @@ export function App() {
         onSave={handleSaveProfile}
         editingProfile={editingProfile}
         existingProfiles={profiles}
+      />
+
+      {/* QR Profile Sync Modal */}
+      <QrSyncModal
+        key={isQrModalOpen ? 'qr-open' : 'qr-closed'}
+        isOpen={isQrModalOpen}
+        onClose={() => setIsQrModalOpen(false)}
+        profiles={profiles}
+        onImportSuccess={() => {
+          setProfiles(StorageService.getProfiles());
+        }}
       />
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, ChevronDown, Check, Zap, ExternalLink, RefreshCw, Flame, History } from 'lucide-react';
 import { IpoItem, REGISTRAR_META } from '../types/ipo';
+import { GmpEntry, findGmpForIpo } from '../services/gmpService';
 
 interface IpoSelectorProps {
   ipos: IpoItem[];
@@ -8,6 +9,7 @@ interface IpoSelectorProps {
   onSelect: (ipo: IpoItem) => void;
   isLoading: boolean;
   onRefresh: () => void;
+  gmpList?: GmpEntry[];
 }
 
 export const IpoSelector: React.FC<IpoSelectorProps> = ({
@@ -16,6 +18,7 @@ export const IpoSelector: React.FC<IpoSelectorProps> = ({
   onSelect,
   isLoading,
   onRefresh,
+  gmpList = [],
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,6 +47,11 @@ export const IpoSelector: React.FC<IpoSelectorProps> = ({
   // Counts
   const latestCount = useMemo(() => ipos.filter((i) => i.timePeriod === 'latest').length, [ipos]);
   const pastCount = useMemo(() => ipos.filter((i) => i.timePeriod === 'past').length, [ipos]);
+
+  // GMP for the currently selected IPO
+  const selectedGmp = useMemo(() => {
+    return findGmpForIpo(selectedIpo?.name, gmpList);
+  }, [selectedIpo, gmpList]);
 
   // Filtered list
   const filteredIpos = useMemo(() => {
@@ -91,7 +99,7 @@ export const IpoSelector: React.FC<IpoSelectorProps> = ({
           {selectedIpo ? (
             <div className="flex items-center justify-between w-full min-w-0 pr-1 sm:pr-2">
               <div className="min-w-0 flex-1 mr-2">
-                <div className="flex items-center space-x-1.5 min-w-0">
+                <div className="flex items-center space-x-1.5 min-w-0 flex-wrap gap-y-1">
                   <span className="font-semibold text-slate-900 text-xs sm:text-sm truncate">
                     {selectedIpo.name}
                   </span>
@@ -107,6 +115,12 @@ export const IpoSelector: React.FC<IpoSelectorProps> = ({
                   {selectedIpo.issueType && (
                     <span className="hidden xs:inline-flex text-[9px] sm:text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 flex-shrink-0">
                       {selectedIpo.issueType}
+                    </span>
+                  )}
+                  {selectedGmp && selectedGmp.gmp > 0 && (
+                    <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] sm:text-[11px] font-extrabold bg-amber-50 text-amber-800 border border-amber-300 shadow-xs flex-shrink-0">
+                      <Flame className="w-3 h-3 text-amber-600 fill-amber-500" />
+                      <span>GMP: +{selectedGmp.pct.toFixed(1)}% (₹{selectedGmp.gmp})</span>
                     </span>
                   )}
                 </div>
@@ -232,6 +246,8 @@ export const IpoSelector: React.FC<IpoSelectorProps> = ({
                   ipo.timePeriod === 'latest' &&
                   idx === 0;
 
+                const itemGmp = findGmpForIpo(ipo.name, gmpList);
+
                 return (
                   <React.Fragment key={ipo.id}>
                     {/* Category Divider in 'all' view */}
@@ -266,7 +282,7 @@ export const IpoSelector: React.FC<IpoSelectorProps> = ({
                       }`}
                     >
                       <div className="pr-3 min-w-0">
-                        <div className="flex items-center space-x-1.5">
+                        <div className="flex items-center space-x-1.5 flex-wrap gap-y-1">
                           <span className="font-semibold text-slate-900 text-xs sm:text-sm truncate">
                             {ipo.name}
                           </span>
@@ -282,6 +298,12 @@ export const IpoSelector: React.FC<IpoSelectorProps> = ({
                           {ipo.issueType && (
                             <span className="text-[9px] uppercase font-bold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 flex-shrink-0">
                               {ipo.issueType}
+                            </span>
+                          )}
+                          {itemGmp && itemGmp.gmp > 0 && (
+                            <span className="inline-flex items-center space-x-0.5 text-[9px] sm:text-[10px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-1.5 py-0.2 rounded flex-shrink-0">
+                              <Flame className="w-2.5 h-2.5 text-amber-600 fill-amber-500" />
+                              <span>+{itemGmp.pct.toFixed(1)}% (₹{itemGmp.gmp})</span>
                             </span>
                           )}
                         </div>

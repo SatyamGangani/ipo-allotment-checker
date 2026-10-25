@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import healthHandler from '../api/health.ts';
 import iposHandler from '../api/ipos.ts';
 import checkAllotmentHandler from '../api/check-allotment.ts';
+import gmpHandler from '../api/gmp.ts';
 
 function createMockRes() {
   const headers: Record<string, string> = {};
@@ -78,5 +79,12 @@ describe('Vercel API Serverless Function Handlers', () => {
     const getRes = createMockRes();
     await checkAllotmentHandler(getReq, getRes);
     expect(getRes.statusCode).toBe(405);
+  });
+
+  it('GET /api/gmp handles requests and 405 on invalid methods', async () => {
+    const postReq: any = { method: 'POST' };
+    const postRes = createMockRes();
+    await gmpHandler(postReq, postRes);
+    expect(postRes.statusCode).toBe(405);
   });
 });

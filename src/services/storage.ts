@@ -129,4 +129,44 @@ export class StorageService {
       return false;
     }
   }
+
+  /**
+   * Imports multiple profiles safely, ignoring duplicates or invalid entries.
+   */
+  static importProfiles(incoming: Array<{ name: string; pan: string }>): {
+    added: Profile[];
+    skippedCount: number;
+  } {
+    const current = this.getProfiles();
+    const existingPans = new Set(current.map((p) => p.pan));
+    const added: Profile[] = [];
+    let skippedCount = 0;
+
+    for (const item of incoming) {
+      const trimmedName = (item.name || '').trim();
+      const normalized = normalizePan(item.pan || '');
+
+      if (!trimmedName || !validatePan(normalized) || existingPans.has(normalized)) {
+        skippedCount++;
+        continue;
+      }
+
+      const newProf: Profile = {
+        id: `pan_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        name: trimmedName,
+        pan: normalized,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      added.push(newProf);
+      existingPans.add(normalized);
+    }
+
+    if (added.length > 0) {
+      this.saveProfiles([...current, ...added]);
+    }
+
+    return { added, skippedCount };
+  }
 }

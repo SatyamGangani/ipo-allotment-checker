@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Users, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users, AlertTriangle, ShieldCheck, QrCode } from 'lucide-react';
 import { Profile, maskPan } from '../types/profile';
 
 interface ProfileManagerProps {
@@ -8,6 +8,7 @@ interface ProfileManagerProps {
   onEditClick: (profile: Profile) => void;
   onDeleteClick: (id: string) => void;
   onDeleteAllClick: () => void;
+  onSyncClick?: () => void;
   disabled?: boolean;
 }
 
@@ -17,6 +18,7 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
   onEditClick,
   onDeleteClick,
   onDeleteAllClick,
+  onSyncClick,
   disabled = false,
 }) => {
   const [showConfirmDeleteAll, setShowConfirmDeleteAll] = useState(false);
@@ -46,6 +48,19 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
             </button>
           )}
 
+          {onSyncClick && (
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={onSyncClick}
+              className="inline-flex items-center space-x-1 text-xs font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100/70 border border-emerald-200 px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 flex-shrink-0"
+              title="Share or scan profiles via QR code"
+            >
+              <QrCode className="w-3.5 h-3.5 text-emerald-600" />
+              <span>QR Sync</span>
+            </button>
+          )}
+
           <button
             type="button"
             disabled={disabled}
@@ -66,14 +81,26 @@ export const ProfileManager: React.FC<ProfileManagerProps> = ({
           <p className="text-xs text-slate-500 max-w-sm mx-auto mt-1 mb-4">
             Add family member PANs once. They remain saved locally in your browser so you can check allotment in 1-click.
           </p>
-          <button
-            type="button"
-            onClick={onAddClick}
-            className="inline-flex items-center space-x-1.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 px-4 py-2 rounded-xl shadow-sm transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add First Family Member PAN</span>
-          </button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={onAddClick}
+              className="inline-flex items-center space-x-1.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 px-4 py-2 rounded-xl shadow-sm transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add First Family Member PAN</span>
+            </button>
+            {onSyncClick && (
+              <button
+                type="button"
+                onClick={onSyncClick}
+                className="inline-flex items-center space-x-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-4 py-2 rounded-xl transition-colors"
+              >
+                <QrCode className="w-4 h-4 text-emerald-600" />
+                <span>Import via QR</span>
+              </button>
+            )}
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">

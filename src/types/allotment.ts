@@ -103,3 +103,42 @@ export function computeSummary(results: ProfileAllotmentResult[]): AllotmentSumm
     }
   );
 }
+
+/**
+ * Infers the retail lot size (in shares) from results.
+ * In Indian IPOs, the minimum applied quantity across retail applications equals the 1-lot size.
+ */
+export function inferLotSize(results: ProfileAllotmentResult[]): number {
+  const appliedList = results
+    .map((r) => r.appliedQuantity)
+    .filter((q): q is number => typeof q === 'number' && q > 0);
+  if (appliedList.length > 0) {
+    return Math.min(...appliedList);
+  }
+  const allottedList = results
+    .map((r) => r.allottedQuantity)
+    .filter((q): q is number => typeof q === 'number' && q > 0);
+  if (allottedList.length > 0) {
+    return Math.min(...allottedList);
+  }
+  return 0;
+}
+
+/**
+ * Formats shares into "1 Lot (25 Shares)" or "2 Lots (50 Shares)" if lot size is known,
+ * or falls back to "1 Lot (25 Shares)" if applied shares matches allotted shares.
+ */
+export function formatLotAndShares(shares: number, lotSize?: number): string {
+  if (shares <= 0) return '0 Shares';
+  const effectiveLotSize = lotSize && lotSize > 0 ? lotSize : shares;
+  if (effectiveLotSize > 0 && shares >= effectiveLotSize) {
+    const lots = Math.floor(shares / effectiveLotSize);
+    const remainder = shares % effectiveLotSize;
+    if (remainder === 0) {
+      return `${lots} Lot${lots > 1 ? 's' : ''} (${shares} Shares)`;
+    }
+    return `${lots} Lot${lots > 1 ? 's' : ''} + ${remainder} sh. (${shares} Shares)`;
+  }
+  return `${shares} Shares`;
+}
+
