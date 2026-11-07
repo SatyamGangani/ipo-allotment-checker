@@ -1,0 +1,72 @@
+name: Bug report
+description: Report a reproducible problem in IPO Check.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include real PANs, account details, credentials, cookies, or unredacted screenshots. Use dummy data only.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: A clear summary of the problem.
+      placeholder: Describe the unexpected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: List the steps needed to reproduce the issue using dummy data.
+      placeholder: |
+        1. Open ...
+        2. Select ...
+        3. Click ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: e.g. Chrome 130
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: e.g. macOS 15
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - IPO discovery
+        - Allotment check
+        - Registrar adapter
+        - PAN profiles / local storage
+        - QR synchronization
+        - GMP / listing information
+        - UI / responsive layout
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy confirmation
+      options:
+        - label: I have removed PANs, personal information, credentials, tokens, and private data from this report.
+          required: true
