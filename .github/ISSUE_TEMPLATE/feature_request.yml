@@ -1,0 +1,47 @@
+name: Feature request
+description: Suggest an improvement or new capability.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem should this solve?
+      description: Describe the user need or limitation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Explain what you would like the application to do.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any other approaches or workarounds?
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - IPO discovery
+        - Allotment checking
+        - Registrar integrations
+        - Privacy and security
+        - QR synchronization
+        - GMP / listing information
+        - Accessibility / UI
+        - Developer experience
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy confirmation
+      options:
+        - label: I have not included PANs, personal information, credentials, tokens, or other private data.
+          required: true

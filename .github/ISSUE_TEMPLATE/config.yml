@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/SatyamGangani/ipo-allotment-checker/security/advisories/new
+    about: Report security issues privately. Do not post PANs or secrets in public issues.
+  - name: Questions and usage help
+    url: https://github.com/SatyamGangani/ipo-allotment-checker/discussions
+    about: Use discussions for general questions when enabled for this repository.
