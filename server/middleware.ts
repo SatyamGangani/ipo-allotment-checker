@@ -35,17 +35,50 @@ export function apiMiddleware(
   }
 
   if (req.method === 'POST' && (cleanPath === '/api/check-allotment' || cleanPath === '/api/check-allotment/')) {
-    const chunks: any[] = [];
-    req.on('data', (chunk: any) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+    const MAX_REQUEST_BYTES = 16 * 1024;
+    const chunks: Buffer[] = [];
+    let receivedBytes = 0;
+    let settled = false;
+
+    req.on('data', (chunk: Buffer | string) => {
+      if (settled) return;
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      receivedBytes += buffer.length;
+
+      if (receivedBytes > MAX_REQUEST_BYTES) {
+        settled = true;
+        req.pause();
+        res.writeHead(413, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ status: 'error', message: 'Request body is too large', canRetry: false }));
+        return;
+      }
+
+      chunks.push(buffer);
+    });
+
     req.on('end', () => {
+      if (settled) return;
+      let body: unknown;
       try {
-        const bodyStr = Buffer.concat(chunks).toString('utf-8');
-        const body = JSON.parse(bodyStr || '{}');
-        handleCheckAllotment(body, res);
+        body = JSON.parse(Buffer.concat(chunks).toString('utf-8') || '{}');
       } catch {
         res.writeHead(400, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ status: 'error', message: 'Malformed JSON payload', canRetry: false }));
+        return;
       }
+
+      void handleCheckAllotment(body as any, res).catch(() => {
+        if (!res.headersSent) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ status: 'error', message: 'Unable to process allotment request', canRetry: true }));
+        }
+      });
+    });
+
+    req.on('error', () => {
+      if (settled || res.headersSent) return;
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'error', message: 'Unable to read request body', canRetry: false }));
     });
     return;
   }
