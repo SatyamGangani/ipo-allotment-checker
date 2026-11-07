@@ -730,7 +730,7 @@ export async function handleCheckAllotment(body: CheckRequestBody, res: ServerRe
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({
         status: 'error',
-        message: `Network error connecting to Skyline: ${err.message}`,
+        message: 'Unable to reach Skyline. Please try again.',
         canRetry: true,
       }));
       return;
@@ -780,31 +780,61 @@ export async function handleCheckAllotment(body: CheckRequestBody, res: ServerRe
   }));
 }
 
+const MAX_REQUEST_BYTES = 16 * 1024;
+
+class RequestBodyError extends Error {
+  constructor(public readonly statusCode: 400 | 413, message: string) {
+    super(message);
+    this.name = 'RequestBodyError';
+  }
+}
+
 async function parseBody(req: IncomingMessage): Promise<any> {
   const potentialBody = (req as any).body;
   if (potentialBody !== undefined && potentialBody !== null) {
     if (typeof potentialBody === 'string') {
+      if (Buffer.byteLength(potentialBody, 'utf-8') > MAX_REQUEST_BYTES) {
+        throw new RequestBodyError(413, 'Request body is too large');
+      }
       try {
         return JSON.parse(potentialBody);
       } catch {
-        return {};
+        throw new RequestBodyError(400, 'Malformed JSON payload');
       }
+    }
+    if (Buffer.byteLength(JSON.stringify(potentialBody), 'utf-8') > MAX_REQUEST_BYTES) {
+      throw new RequestBodyError(413, 'Request body is too large');
     }
     return potentialBody;
   }
 
-  return new Promise((resolve) => {
-    const chunks: any[] = [];
-    req.on('data', (chunk) => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    let receivedBytes = 0;
+    let settled = false;
+
+    req.on('data', (chunk) => {
+      if (settled) return;
+      const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      receivedBytes += buffer.length;
+      if (receivedBytes > MAX_REQUEST_BYTES) {
+        settled = true;
+        reject(new RequestBodyError(413, 'Request body is too large'));
+        return;
+      }
+      chunks.push(buffer);
+    });
     req.on('end', () => {
+      if (settled) return;
       try {
-        const bodyStr = Buffer.concat(chunks).toString('utf-8');
-        resolve(JSON.parse(bodyStr || '{}'));
+        resolve(JSON.parse(Buffer.concat(chunks).toString('utf-8') || '{}'));
       } catch {
-        resolve({});
+        reject(new RequestBodyError(400, 'Malformed JSON payload'));
       }
     });
-    req.on('error', () => resolve({}));
+    req.on('error', () => {
+      if (!settled) reject(new RequestBodyError(400, 'Unable to read request body'));
+    });
   });
 }
 
@@ -829,8 +859,9 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   try {
     const body = await parseBody(req);
     return await handleCheckAllotment(body, res);
-  } catch {
-    res.writeHead(400, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'error', message: 'Malformed JSON payload', canRetry: false }));
+  } catch (error) {
+    const bodyError = error instanceof RequestBodyError ? error : new RequestBodyError(400, 'Malformed JSON payload');
+    res.writeHead(bodyError.statusCode, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'error', message: bodyError.message, canRetry: false }));
   }
 }
