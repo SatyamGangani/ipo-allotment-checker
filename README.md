@@ -1,70 +1,89 @@
 # IPO Check
 
-A browser-first Indian IPO allotment checker for managing multiple family profiles and checking allotment results across supported registrars. The app also includes IPO discovery, live GMP information, a listing gain calculator, and QR-based profile transfer.
+<p align="center">
+  <strong>A simpler way to track Indian IPO allotment results across family profiles.</strong>
+  <br />
+  Discover IPOs, check supported registrar results, review GMP snapshots and estimate listing gains — in one place.
+  <br /><br />
+  <a href="https://ipo.satyamgangani.in"><strong>Open IPO Check →</strong></a>
+  ·
+  <a href="https://github.com/SatyamGangani/ipo-allotment-checker/issues">Report a bug</a>
+  ·
+  <a href="https://github.com/SatyamGangani/ipo-allotment-checker/issues">Request a feature</a>
+</p>
 
-> **Project status:** This repository is publicly visible, but it is not currently licensed for reuse. See [LICENSING.md](LICENSING.md) before copying, modifying, or redistributing any part of the project.
+<p align="center">
+  <img alt="React" src="https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" />
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white" />
+  <img alt="Tests" src="https://img.shields.io/badge/tests-Vitest-6E9F18?logo=vitest&logoColor=white" />
+  <a href="https://github.com/SatyamGangani/ipo-allotment-checker/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/SatyamGangani/ipo-allotment-checker/actions/workflows/ci.yml/badge.svg" /></a>
+</p>
 
-## Features
+> **Licensing status:** This repository does not currently include a reuse license. Please read [LICENSING.md](LICENSING.md) before copying, modifying, or redistributing code. Public visibility does not automatically grant reuse rights.
 
-- **Family profiles:** Save names and PAN profiles in the browser for repeat checks.
-- **PAN validation:** Normalize and validate PAN format, prevent duplicates, and mask PANs in the interface.
-- **Multi-profile checks:** Check configured profiles with bounded concurrency and per-profile progress.
-- **Explicit result states:** Distinguish allotted, not allotted, not applied, not yet available, manual verification, and lookup errors.
-- **IPO discovery:** Load current and historical IPO records from supported data sources.
-- **Registrar adapters:** Use automated checks where implemented and direct manual portal fallbacks where CAPTCHA, bot protection, or interactive verification prevents automation.
-- **GMP and listing information:** Display market snapshot information and listing performance where data is available.
-- **QR profile transfer:** Export and import selected profiles between browsers/devices.
+## What is IPO Check?
 
-Registrar availability and external endpoints can change without notice. An automated result is only as reliable as the response returned by the relevant registrar.
+IPO Check is a browser-first Indian IPO companion built to make checking allotment status across multiple family applications less repetitive. It combines family profiles with IPO discovery and useful listing-day reference tools.
 
-## Registrar support
+## Highlights
 
-The current implementation documents the following integration state:
+| Feature | What it does |
+| --- | --- |
+| Family profiles | Save multiple applicant profiles in your browser for repeat checks |
+| PAN validation | Normalize and validate PAN format, prevent duplicates and mask PANs in the interface |
+| Multi-profile checking | Run checks for configured profiles with bounded concurrency and per-profile progress |
+| Clear result states | Distinguish allotted, not allotted, not applied, pending, manual verification and lookup errors |
+| IPO discovery | Browse current and historical IPO records from supported data sources |
+| Registrar adapters | Automate supported lookups and provide manual portal fallbacks where interactive verification is required |
+| GMP and listing information | View available grey-market snapshots and listing performance information |
+| Listing gain calculator | Estimate potential listing value and gain using your inputs |
+| QR profile transfer | Move selected profiles between browsers/devices using a QR payload |
 
-| Registrar / source | Current mode | Notes |
-|---|---|---|
-| MUFG Intime (Link Intime) | Automated | Uses the registrar's PAN lookup endpoint |
-| Alankit | Automated | Uses the registrar's JSON lookup endpoint |
-| KFin Technologies | Manual fallback | Portal uses CAPTCHA-protected verification |
-| Bigshare Services | Manual fallback | Portal uses session/CAPTCHA verification |
-| BSE India | Manual fallback | Automated requests are blocked by bot protection |
-| NSE India | Manual fallback | Requires additional verification / investor login |
-| Skyline Financial | Manual fallback | Interactive session form |
-| Purva Sharegistry | Manual fallback | Interactive query form |
+## Registrar integration status
 
-This table describes the code's documented integration status, not a guarantee that a registrar endpoint is currently online.
+The table below reflects the integration state documented in the current codebase. It is not a guarantee that an external registrar endpoint is available at this moment.
+
+| Registrar / source | Integration mode |
+| --- | --- |
+| MUFG Intime (Link Intime) | Automated lookup |
+| Alankit | Automated lookup |
+| KFin Technologies | Manual portal fallback |
+| Bigshare Services | Manual portal fallback |
+| BSE India | Manual portal fallback |
+| NSE India | Manual portal fallback |
+| Skyline Financial | Manual portal fallback |
+| Purva Sharegistry | Manual portal fallback |
+
+Registrar websites and anti-bot protections can change. Always verify important results on the official registrar or exchange website.
 
 ## Tech stack
 
-- React 19 and TypeScript
-- Vite
+- React 19, TypeScript and Vite
 - Tailwind CSS
-- Node.js API handlers for registrar/data-source requests
+- Node.js API handlers for registrar and data-source requests
 - Vitest and Testing Library
 - Vercel deployment configuration
 
-## Getting started
+## Run locally
 
 ### Requirements
 
 - Node.js 24 (recommended for the current toolchain)
 - npm
 
-### Install dependencies
+### Setup
 
 ```bash
+git clone https://github.com/SatyamGangani/ipo-allotment-checker.git
+cd ipo-allotment-checker
 npm ci
-```
-
-### Start the development server
-
-```bash
 npm run dev
 ```
 
-Vite starts the application locally (normally at `http://localhost:5173`). The development middleware also exposes the API handlers.
+Vite normally serves the app at [http://localhost:5173](http://localhost:5173). The development middleware also exposes the API handlers.
 
-### Run checks
+### Quality checks
 
 ```bash
 npm run lint
@@ -72,45 +91,50 @@ npm test
 npm run build
 ```
 
-### Run the standalone server
+### Standalone server
 
 ```bash
 npm run build
 npm start
 ```
 
-The standalone server listens on port 3000 by default. See `server/standalone.mjs` for its runtime configuration.
+The standalone server listens on port 3000 by default. See `server/standalone.mjs` for runtime configuration.
 
-## Project structure
+## Repository layout
 
 ```text
-api/                 Serverless API handlers for IPOs, allotment checks, and GMP
+api/                 Serverless API handlers for IPOs, allotment checks and GMP
 server/              Development middleware and standalone server
 src/components/      React UI components
 src/services/        Browser services and registrar adapters
 src/types/           Shared TypeScript models and validation
 tests/               Unit and component tests
-.github/             Contribution templates and CI workflow
+.github/             CI workflow and contribution templates
 ```
 
-## Privacy and sensitive data
+## Privacy and PAN safety
 
-PAN is sensitive personal information. Read [PRIVACY.md](PRIVACY.md) before using the application.
+PAN is sensitive personal information. Read [PRIVACY.md](PRIVACY.md) before using the app.
 
-Important points:
-
-- Saved profiles are persisted in the browser's `localStorage`; this is not encrypted storage.
-- When you run an allotment check, the selected PAN is sent to this project's API endpoint and forwarded to the relevant registrar lookup service.
-- QR profile export contains the selected profile data, including PAN values. Anyone who obtains the QR payload may be able to read that information.
-- The project does not intentionally maintain a user account database for PAN profiles. This does not mean that browsers, hosting providers, network infrastructure, or registrar services cannot process request data.
-- Do not use the app on a shared or untrusted device, and do not publish real PAN values in issues, pull requests, screenshots, logs, or test fixtures.
+- Saved profiles are stored in browser `localStorage`, which is not encrypted storage.
+- During an allotment check, the selected PAN is sent to this project's API and forwarded to the relevant registrar lookup service.
+- QR profile exports include the selected profile data, including PAN values. Treat the QR code as sensitive.
+- Do not use the app on a shared or untrusted device.
+- Never post real PAN values in issues, pull requests, screenshots, logs or test fixtures.
 
 ## Contributing
 
-Bug reports, thoughtful feature proposals, and code contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
+Contributions, bug reports and practical feature suggestions are welcome.
 
-For security concerns, follow [SECURITY.md](SECURITY.md). Please do not disclose real PANs or other personal information in public issues.
+1. Read [CONTRIBUTING.md](CONTRIBUTING.md).
+2. Follow the [Code of Conduct](CODE_OF_CONDUCT.md).
+3. Check the [project roadmap](ROADMAP.md) and existing issues before starting larger work.
+4. For security concerns, follow [SECURITY.md](SECURITY.md). Do not disclose personal information in public reports.
+
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for planned improvements and priorities. You can suggest or discuss an idea through [GitHub Issues](https://github.com/SatyamGangani/ipo-allotment-checker/issues).
 
 ## License and reuse
 
-No license is currently included. The project was developed from an existing public IPO allotment project whose repository does not declare a license. Public visibility on GitHub does not grant permission to relicense or redistribute upstream code. See [LICENSING.md](LICENSING.md) for the current status. Do not assume that this repository is MIT-licensed or otherwise open source until the rights have been clarified and a license file is added.
+No license is currently included. The project was developed from an existing public IPO allotment project whose repository does not declare a license. The rights to upstream code have not been established, so this repository does not claim an MIT or other open-source license. Read [LICENSING.md](LICENSING.md) for details.
