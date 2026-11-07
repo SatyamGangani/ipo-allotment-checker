@@ -1,5 +1,7 @@
 # IPO Check
 
+<p align="center"><img src="docs/ipo-check-banner.svg" alt="IPO Check — Indian IPO allotment, made simpler" width="100%" /></p>
+
 <p align="center">
   <strong>A simpler way to track Indian IPO allotment results across family profiles.</strong>
   <br />
