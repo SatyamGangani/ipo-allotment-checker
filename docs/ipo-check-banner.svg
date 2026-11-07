@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#10152b"/>
+      <stop offset="1" stop-color="#1d2b52"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#8b7cff"/>
+      <stop offset="1" stop-color="#43d6c5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="640" rx="36" fill="url(#bg)"/>
+  <circle cx="1080" cy="115" r="220" fill="#7668ff" opacity=".10"/>
+  <circle cx="1160" cy="550" r="260" fill="#43d6c5" opacity=".08"/>
+  <g transform="translate(104 150)">
+    <rect width="116" height="116" rx="30" fill="url(#accent)"/>
+    <path d="M30 76V39h13l15 21 15-21h13v37H73V58L58 78 43 58v18z" fill="#10152b"/>
+    <path d="M82 26l9-9 9 9-9 9z" fill="#fff" opacity=".9"/>
+  </g>
+  <text x="104" y="348" fill="#ffffff" font-family="Inter,Arial,sans-serif" font-size="78" font-weight="750" letter-spacing="-2">IPO Check</text>
+  <text x="108" y="414" fill="#c8d2ef" font-family="Inter,Arial,sans-serif" font-size="29">Indian IPO allotment, made simpler.</text>
+  <g transform="translate(108 478)">
+    <rect width="224" height="54" rx="27" fill="#ffffff" opacity=".10"/>
+    <text x="112" y="35" text-anchor="middle" fill="#e9edff" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="600">MULTI-PROFILE CHECKS</text>
+    <rect x="242" width="176" height="54" rx="27" fill="#ffffff" opacity=".10"/>
+    <text x="330" y="35" text-anchor="middle" fill="#e9edff" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="600">IPO DISCOVERY</text>
+    <rect x="436" width="184" height="54" rx="27" fill="#ffffff" opacity=".10"/>
+    <text x="528" y="35" text-anchor="middle" fill="#e9edff" font-family="Inter,Arial,sans-serif" font-size="18" font-weight="600">LISTING TOOLS</text>
+  </g>
+  <text x="108" y="586" fill="#91a0c5" font-family="Inter,Arial,sans-serif" font-size="17">ipo.satyamgangani.in</text>
+  <g transform="translate(890 200)">
+    <rect width="270" height="300" rx="28" fill="#ffffff" opacity=".07" stroke="#ffffff" stroke-opacity=".16"/>
+    <rect x="26" y="28" width="218" height="44" rx="12" fill="#ffffff" opacity=".10"/>
+    <circle cx="49" cy="50" r="7" fill="#43d6c5"/>
+    <rect x="68" y="44" width="106" height="11" rx="5.5" fill="#dce5ff" opacity=".8"/>
+    <rect x="26" y="96" width="218" height="72" rx="16" fill="#ffffff" opacity=".08"/>
+    <text x="44" y="125" fill="#aebce0" font-family="Inter,Arial,sans-serif" font-size="13">APPLICATION STATUS</text>
+    <text x="44" y="151" fill="#ffffff" font-family="Inter,Arial,sans-serif" font-size="22" font-weight="700">Allotment check</text>
+    <rect x="26" y="190" width="218" height="82" rx="16" fill="#ffffff" opacity=".08"/>
+    <path d="M48 236l24-24 22 15 34-39" fill="none" stroke="url(#accent)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="128" cy="188" r="5" fill="#43d6c5"/>
+    <rect x="151" y="215" width="72" height="10" rx="5" fill="#dce5ff" opacity=".65"/>
+    <rect x="151" y="235" width="52" height="8" rx="4" fill="#dce5ff" opacity=".35"/>
+  </g>
+</svg>
