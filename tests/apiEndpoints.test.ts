@@ -81,6 +81,28 @@ describe('Vercel API Serverless Function Handlers', () => {
     expect(getRes.statusCode).toBe(405);
   });
 
+  it('rejects oversized allotment request bodies', async () => {
+    const res = createMockRes();
+    await checkAllotmentHandler({
+      method: 'POST',
+      body: ' '.repeat(16 * 1024 + 1),
+    } as any, res);
+
+    expect(res.statusCode).toBe(413);
+    expect(res.getJson().message).toBe('Request body is too large');
+  });
+
+  it('rejects malformed JSON request bodies', async () => {
+    const res = createMockRes();
+    await checkAllotmentHandler({
+      method: 'POST',
+      body: '{invalid-json',
+    } as any, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.getJson().message).toBe('Malformed JSON payload');
+  });
+
   it('rejects malformed PAN before contacting a registrar', async () => {
     const res = createMockRes();
     await checkAllotmentHandler({
