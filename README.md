@@ -1,106 +1,116 @@
-# IPO Check — Minimal Multi-PAN IPO Allotment Checker
+# IPO Check
 
-A clean, modern, zero-login web application that allows users to configure their family members' PAN numbers once and check IPO allotment status for all of them together in a single click.
+A browser-first Indian IPO allotment checker for managing multiple family profiles and checking allotment results across supported registrars. The app also includes IPO discovery, live GMP information, a listing gain calculator, and QR-based profile transfer.
+
+> **Project status:** This repository is publicly visible, but it is not currently licensed for reuse. See [LICENSING.md](LICENSING.md) before copying, modifying, or redistributing any part of the project.
 
 ## Features
 
-- **One-Time Family Profile Setup**: Save family member names/nicknames and PAN numbers once in browser `localStorage`.
-- **Privacy First (Zero Server Storage)**: No database, no user accounts, no login, and zero PAN persistence on any server. PAN numbers are never sent to analytics or logged.
-- **PAN Masking & Validation**: Standard Indian PAN validation (`[A-Z]{5}[0-9]{4}[A-Z]{1}`), uppercase normalization, duplicate PAN prevention, and safe masking (`ABC•••234F`) in the UI.
-- **Searchable IPO Selector**: Search and filter live IPO issues from registrars and exchanges.
-- **Automated Multi-PAN Lookups**: Concurrent, rate-limit friendly checks for all family PANs with real-time progress indicators ("Checking 2 of 4").
-- **Clear, Normalized Allotment Statuses**:
-  - `Allotted`: Confirmed allotment with lot count and allotted share quantity.
-  - `Not Allotted`: Confirmed application was placed, but 0 shares allotted.
-  - `Not Applied`: Registrar confirms no application was submitted for this PAN.
-  - `Not Yet Available`: Allotment results have not yet been published by the registrar.
-  - `Check Manually`: Interactive verification required (CAPTCHA challenge, bot protection, or registered investor login).
-  - `Could Not Check`: Upstream network timeout or server error with individual retry action.
-- **Zero False "Not Allotted" Results**: Network errors, timeouts, CAPTCHAs, and unexpected responses are never falsely interpreted as "Not Allotted".
+- **Family profiles:** Save names and PAN profiles in the browser for repeat checks.
+- **PAN validation:** Normalize and validate PAN format, prevent duplicates, and mask PANs in the interface.
+- **Multi-profile checks:** Check configured profiles with bounded concurrency and per-profile progress.
+- **Explicit result states:** Distinguish allotted, not allotted, not applied, not yet available, manual verification, and lookup errors.
+- **IPO discovery:** Load current and historical IPO records from supported data sources.
+- **Registrar adapters:** Use automated checks where implemented and direct manual portal fallbacks where CAPTCHA, bot protection, or interactive verification prevents automation.
+- **GMP and listing information:** Display market snapshot information and listing performance where data is available.
+- **QR profile transfer:** Export and import selected profiles between browsers/devices.
 
----
+Registrar availability and external endpoints can change without notice. An automated result is only as reliable as the response returned by the relevant registrar.
 
-## Registrar Integration Status
+## Registrar support
 
-| Registrar / Exchange | Integration Type | Status | Technical Details & Limitations |
-| :--- | :--- | :--- | :--- |
-| **Link Intime India** | Automated | **Active & Functional** | XML API via `SearchOnPan` endpoint. Returns application status, applied shares, and allotted shares. |
-| **Alankit Assignments** | Automated | **Active & Functional** | JSON API via `GetQueryResult` endpoint. Returns application status and allotted quantity. |
-| **KFin Technologies** | Manual Check | **Manual Portal Fallback** | Official portal enforces image CAPTCHA challenges on submissions. Application provides direct portal deep link with 1-click PAN copy. |
-| **Bigshare Services** | Manual Check | **Manual Portal Fallback** | Enforces dynamic session CAPTCHA (`Captcha.ashx`). Direct link provided with 1-click PAN copy. |
-| **BSE India (Exchange)** | Manual Check | **Manual Portal Fallback** | Protected by Akamai Bot Manager (WAF) blocking automated server/script requests with HTTP 403. Direct official link provided. |
-| **NSE India (Exchange)** | Manual Check | **Manual Portal Fallback** | Requires reCAPTCHA v3 token and registered investor login credentials. |
-| **Skyline Financial** | Manual Check | **Manual Portal Fallback** | Multi-step interactive CSRF session form. |
-| **Purva Sharegistry** | Manual Check | **Manual Portal Fallback** | Interactive query form. |
+The current implementation documents the following integration state:
 
----
+| Registrar / source | Current mode | Notes |
+|---|---|---|
+| MUFG Intime (Link Intime) | Automated | Uses the registrar's PAN lookup endpoint |
+| Alankit | Automated | Uses the registrar's JSON lookup endpoint |
+| KFin Technologies | Manual fallback | Portal uses CAPTCHA-protected verification |
+| Bigshare Services | Manual fallback | Portal uses session/CAPTCHA verification |
+| BSE India | Manual fallback | Automated requests are blocked by bot protection |
+| NSE India | Manual fallback | Requires additional verification / investor login |
+| Skyline Financial | Manual fallback | Interactive session form |
+| Purva Sharegistry | Manual fallback | Interactive query form |
 
-## Architecture
+This table describes the code's documented integration status, not a guarantee that a registrar endpoint is currently online.
 
-```
-ipo-web-app-allotment/
-├── src/
-│   ├── types/
-│   │   ├── ipo.ts                # IPO & registrar metadata & support types
-│   │   ├── profile.ts            # Profile schema, PAN validation & masking
-│   │   └── allotment.ts          # Normalized allotment status & UI badge styles
-│   ├── services/
-│   │   ├── storage.ts            # localStorage persistence layer
-│   │   ├── ipoDiscovery.ts       # Live IPO discovery with TTL caching & fallbacks
-│   │   ├── allotmentService.ts   # Concurrency-controlled batch checking & retry
-│   │   └── registrars/
-│   │       ├── types.ts          # RegistrarAdapter interface & params
-│   │       ├── linkIntimeAdapter.ts
-│   │       ├── alankitAdapter.ts
-│   │       ├── manualAdapters.ts # Graceful fallback for CAPTCHA/WAF registrars
-│   │       └── registry.ts       # Adapter resolution registry
-│   ├── components/
-│   │   ├── Header.tsx            # App header with local storage privacy disclosure
-│   │   ├── IpoSelector.tsx       # Searchable dropdown with registrar badges
-│   │   ├── ProfileManager.tsx    # Saved PAN profile list, edit & delete actions
-│   │   ├── ProfileModal.tsx      # Add/edit modal with live validation & masking
-│   │   ├── CheckAction.tsx       # Prominent "Check All PANs" action with progress bar
-│   │   ├── ResultsSummary.tsx    # Status count cards (Allotted, Not Allotted, etc.)
-│   │   ├── ResultCard.tsx        # Individual profile result card with retry action
-│   │   └── ResultsSection.tsx    # Results container
-│   ├── App.tsx                   # Main single-page workflow coordinator
-│   ├── main.tsx
-│   └── index.css                 # Tailwind CSS directives & typography
-├── server/
-│   ├── registrarProxy.ts         # Secure, zero-PAN logging registrar proxy
-│   ├── middleware.ts             # Connect middleware for Vite dev & preview
-│   └── standalone.mjs            # Production HTTP server runner
-├── tests/
-│   ├── panProfile.test.ts        # Unit tests for PAN validation & localStorage
-│   ├── normalizedStatus.test.ts  # Registrar status mapping & error isolation tests
-│   ├── allotmentService.test.ts  # Batch check & retry tests
-│   └── App.test.tsx              # React integration & UI workflow tests
-├── index.html
-├── package.json
-├── tailwind.config.js
-├── tsconfig.json
-└── vite.config.ts
+## Tech stack
+
+- React 19 and TypeScript
+- Vite
+- Tailwind CSS
+- Node.js API handlers for registrar/data-source requests
+- Vitest and Testing Library
+- Vercel deployment configuration
+
+## Getting started
+
+### Requirements
+
+- Node.js 24 (recommended for the current toolchain)
+- npm
+
+### Install dependencies
+
+```bash
+npm ci
 ```
 
----
+### Start the development server
 
-## Running Locally
-
-### Development Server
 ```bash
 npm run dev
 ```
-Starts the Vite server on `http://localhost:5173/` with embedded API proxy middleware.
 
-### Run Automated Tests
+Vite starts the application locally (normally at `http://localhost:5173`). The development middleware also exposes the API handlers.
+
+### Run checks
+
 ```bash
+npm run lint
 npm test
+npm run build
 ```
-Runs the full Vitest suite covering validation, persistence, adapter isolation, error handling, and end-to-end user workflows.
 
-### Production Build & Standalone Server
+### Run the standalone server
+
 ```bash
 npm run build
 npm start
 ```
-Compiles the TypeScript code, bundles the production assets into `dist/`, and launches the lightweight standalone server on `http://localhost:3000/`.
+
+The standalone server listens on port 3000 by default. See `server/standalone.mjs` for its runtime configuration.
+
+## Project structure
+
+```text
+api/                 Serverless API handlers for IPOs, allotment checks, and GMP
+server/              Development middleware and standalone server
+src/components/      React UI components
+src/services/        Browser services and registrar adapters
+src/types/           Shared TypeScript models and validation
+tests/               Unit and component tests
+.github/             Contribution templates and CI workflow
+```
+
+## Privacy and sensitive data
+
+PAN is sensitive personal information. Read [PRIVACY.md](PRIVACY.md) before using the application.
+
+Important points:
+
+- Saved profiles are persisted in the browser's `localStorage`; this is not encrypted storage.
+- When you run an allotment check, the selected PAN is sent to this project's API endpoint and forwarded to the relevant registrar lookup service.
+- QR profile export contains the selected profile data, including PAN values. Anyone who obtains the QR payload may be able to read that information.
+- The project does not intentionally maintain a user account database for PAN profiles. This does not mean that browsers, hosting providers, network infrastructure, or registrar services cannot process request data.
+- Do not use the app on a shared or untrusted device, and do not publish real PAN values in issues, pull requests, screenshots, logs, or test fixtures.
+
+## Contributing
+
+Bug reports, thoughtful feature proposals, and code contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md) before participating.
+
+For security concerns, follow [SECURITY.md](SECURITY.md). Please do not disclose real PANs or other personal information in public issues.
+
+## License and reuse
+
+No license is currently included. The project was developed from an existing public IPO allotment project whose repository does not declare a license. Public visibility on GitHub does not grant permission to relicense or redistribute upstream code. See [LICENSING.md](LICENSING.md) for the current status. Do not assume that this repository is MIT-licensed or otherwise open source until the rights have been clarified and a license file is added.
