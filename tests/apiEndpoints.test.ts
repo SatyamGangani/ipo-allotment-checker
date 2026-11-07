@@ -81,6 +81,28 @@ describe('Vercel API Serverless Function Handlers', () => {
     expect(getRes.statusCode).toBe(405);
   });
 
+  it('rejects malformed PAN before contacting a registrar', async () => {
+    const res = createMockRes();
+    await checkAllotmentHandler({
+      method: 'POST',
+      body: { registrar: 'LINKINTIME', companyId: 'TEST', pan: 'not-a-pan' },
+    } as any, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.getJson().message).toBe('Invalid PAN format');
+  });
+
+  it('rejects unknown registrar codes', async () => {
+    const res = createMockRes();
+    await checkAllotmentHandler({
+      method: 'POST',
+      body: { registrar: 'UNKNOWN', pan: 'ABCDE1234F' },
+    } as any, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.getJson().message).toBe('Unsupported registrar');
+  });
+
   it('GET /api/gmp handles requests and 405 on invalid methods', async () => {
     const postReq: any = { method: 'POST' };
     const postRes = createMockRes();

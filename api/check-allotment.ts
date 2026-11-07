@@ -53,13 +53,51 @@ async function getLiveKfintechCompanies(): Promise<Array<{ clientId: string; nam
 }
 
 export async function handleCheckAllotment(body: CheckRequestBody, res: ServerResponse) {
-  const { registrar, companyId, pan } = body;
+  const safeBody = body && typeof body === 'object' ? body : ({} as CheckRequestBody);
+  const registrar = typeof safeBody.registrar === 'string' ? safeBody.registrar.trim().toUpperCase() : '';
+  const companyId = typeof safeBody.companyId === 'string' ? safeBody.companyId.trim() : undefined;
+  const pan = typeof safeBody.pan === 'string' ? safeBody.pan.trim().toUpperCase() : '';
 
   if (!pan || !registrar) {
     res.writeHead(400, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({
       status: 'error',
       message: 'Missing required parameters (registrar, pan)',
+      canRetry: false,
+    }));
+    return;
+  }
+
+  // Validate sensitive input before making any outbound registrar request.
+  if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan)) {
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'error',
+      message: 'Invalid PAN format',
+      canRetry: false,
+    }));
+    return;
+  }
+
+  const supportedRegistrars = new Set([
+    'LINKINTIME', 'ALANKIT', 'KFINTECH', 'BIGSHARE', 'SKYLINE',
+    'BSE', 'NSE', 'PURVA',
+  ]);
+  if (!supportedRegistrars.has(registrar)) {
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'error',
+      message: 'Unsupported registrar',
+      canRetry: false,
+    }));
+    return;
+  }
+
+  if (companyId && companyId.length > 128) {
+    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'error',
+      message: 'Invalid company identifier',
       canRetry: false,
     }));
     return;
